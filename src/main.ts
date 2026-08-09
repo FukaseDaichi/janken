@@ -1,7 +1,17 @@
-const canvas = document.getElementById('game') as HTMLCanvasElement
-const ctx = canvas.getContext('2d')!
-ctx.fillStyle = '#1a1a2e'
-ctx.fillRect(0, 0, canvas.width, canvas.height)
-ctx.fillStyle = '#fff'
-ctx.font = '32px sans-serif'
-ctx.fillText('じゃんけん弾除け - scaffold OK', 240, 360)
+import { Game } from './game'
+import { TitleScene } from './scenes/title'
+import { Input } from './input'
+import { loadAssets } from './assets'
+import { Sound } from './audio'
+
+async function main(): Promise<void> {
+  const canvas = document.getElementById('game') as HTMLCanvasElement
+  const ctx = canvas.getContext('2d')!
+  const input = new Input()
+  input.attach()
+  const assets = await loadAssets()
+  const g = { input, assets, sound: new Sound(), storage: localStorage }
+  new Game(ctx, new TitleScene(g)).start()
+}
+
+void main()
