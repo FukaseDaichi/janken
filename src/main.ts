@@ -14,8 +14,15 @@ async function main(): Promise<void> {
   // 読み込みは通常数百ms程度なので、その間の最初の1打鍵を落としても
   // レスポンスの悪さとしては感じられない。
   const assets = await loadAssets()
-  // Webフォント(Dela Gothic One / Orbitron)のロードを待つ。失敗しても
-  // document.fonts.ready は resolve されるため起動はブロックされない。
+  // Canvas 2D の ctx.font 代入は Web フォントの遅延ロードをトリガーしないため、
+  // 実際に使う指定を明示的にロードしてから描画を開始する。オフライン等で
+  // 失敗しても catch して握り潰し、sans-serif フォールバックで起動を続ける。
+  await Promise.all([
+    document.fonts.load('16px "Dela Gothic One"'),
+    document.fonts.load('500 16px "Orbitron"'),
+    document.fonts.load('700 16px "Orbitron"'),
+    document.fonts.load('900 16px "Orbitron"'),
+  ].map((p) => p.catch(() => undefined)))
   await document.fonts.ready
   input.attach()
   const g = { input, assets, sound: new Sound(), storage: localStorage }
