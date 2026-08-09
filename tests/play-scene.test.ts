@@ -10,6 +10,8 @@ import { JankenHand } from '../src/entities/hand'
 import { spawnBullet } from '../src/entities/bullet'
 import { beats } from '../src/logic/janken'
 import { killBonus, timeScore } from '../src/logic/score'
+import { StarItem, ITEM_SPAWN_INTERVAL_SEC, ITEM_LIFE_SEC } from '../src/entities/item'
+import { initialInvincibleState, activateInvincible, isInvincible, INVINCIBLE_SEC } from '../src/logic/invincible'
 
 // tests/storage.test.ts と同じ形の in-memory ScoreStore
 function memoryStore(initial: Record<string, string> = {}): ScoreStore & { data: Record<string, string> } {
@@ -43,9 +45,15 @@ function makeLatchInput(initialConfirm = false): Input & { setConfirm(v: boolean
   } as unknown as Input & { setConfirm(v: boolean): void; peekConfirm(): boolean }
 }
 
+interface SoundSpy {
+  bgmModes: string[]
+  powerUpCalls: number
+}
+
 /** Input/Assets/Sound は private フィールドを持つ具象クラスなので、
- *  構造的に一致するスタブを any-cast で GameContext に差し込む。 */
-function makeContext(input?: Input): GameContext {
+ *  構造的に一致するスタブを any-cast で GameContext に差し込む。
+ *  Sound の呼び出し履歴はテストから読めるよう soundSpy に載せて返す。 */
+function makeContext(input?: Input): GameContext & { soundSpy: SoundSpy } {
   const resolvedInput =
     input ??
     ({
@@ -58,17 +66,28 @@ function makeContext(input?: Input): GameContext {
     draw: () => {},
   } as unknown as Assets
 
+  const soundSpy: SoundSpy = { bgmModes: [], powerUpCalls: 0 }
+
   const sound = {
     kill: () => {},
     levelUp: () => {},
     gameOver: () => {},
     startBgm: () => {},
     stopBgm: () => {},
+    setBgmMode: (mode: string) => { soundSpy.bgmModes.push(mode) },
+    powerUp: () => { soundSpy.powerUpCalls++ },
   } as unknown as Sound
 
   const storage = memoryStore()
 
-  return { input: resolvedInput, assets, sound, storage }
+  return { input: resolvedInput, assets, sound, storage, soundSpy }
+}
+
+/** 弾と手のスポーンを止める。テストが置いたエンティティ以外が湧かないようにして、
+ *  長い dtSec を進めるテストが偶発的な衝突で GAME OVER にならないようにする。 */
+function freezeHazardSpawns(scene: PlayScene): void {
+  ;(scene as any).bulletTimer = Number.MAX_SAFE_INTEGER
+  ;(scene as any).handTimer = Number.MAX_SAFE_INTEGER
 }
 
 describe('PlayScene.update', () => {
@@ -188,6 +207,134 @@ describe('PlayScene.update', () => {
 
     expect(next).toBeNull()
     expect(input.peekConfirm()).toBe(false)
+  })
+
+  it('星に触れると無敵になり、無敵BGMへ切り替わって取得音が鳴る', () => {
+    const g = makeContext()
+    const scene = new PlayScene(g)
+    const player = (scene as any).player
+    ;(scene as any).hands = []
+    ;(scene as any).bullets = []
+    ;(scene as any).items = [new StarItem(player.x, player.y)]
+
+    const next = scene.update(0)
+
+    expect(next).toBeNull()
+    expect(isInvincible((scene as any).inv)).toBe(true)
+    expect(g.soundSpy.bgmModes).toEqual(['invincible'])
+    expect(g.soundSpy.powerUpCalls).toBe(1)
+  })
+
+  it('無敵中は弾に当たっても死なず、当たった弾が消える', () => {
+    const scene = new PlayScene(makeContext())
+    const player = (scene as any).player
+    ;(scene as any).inv = activateInvincible(initialInvincibleState()).state
+    const bullet = spawnBullet('straight', player.x, player.y, 0, 0)
+    ;(scene as any).bullets = [bullet]
+    ;(scene as any).hands = []
+    ;(scene as any).items = []
+
+    const next = scene.update(0)
+
+    expect(next).toBeNull()
+    expect(bullet.alive).toBe(false)
+  })
+
+  it('無敵中は負ける手も撃破でき、killBonus と勝利カウントが入る', () => {
+    const scene = new PlayScene(makeContext())
+    const player = (scene as any).player
+    player.hand = 'rock'
+    ;(scene as any).inv = activateInvincible(initialInvincibleState()).state
+    // rock に勝つ手 = paper。通常なら GAME OVER になる組み合わせ。
+    const enemy = new JankenHand(player.x, player.y, 0, 0, 'paper')
+    ;(scene as any).hands = [enemy]
+    ;(scene as any).bullets = []
+    ;(scene as any).items = []
+
+    const next = scene.update(0)
+
+    expect(next).toBeNull()
+    expect(enemy.alive).toBe(false)
+    expect((scene as any).levelState.wins).toBe(1)
+    expect((scene as any).score).toBe(killBonus(1))
+  })
+
+  // 逆順だと「取ったのに死んだ」が起きる。処理順の回帰テスト。
+  it('星と弾に同時に触れたフレームは、取得が先に処理されるので死なない', () => {
+    const scene = new PlayScene(makeContext())
+    const player = (scene as any).player
+    const bullet = spawnBullet('straight', player.x, player.y, 0, 0)
+    ;(scene as any).bullets = [bullet]
+    ;(scene as any).hands = []
+    ;(scene as any).items = [new StarItem(player.x, player.y)]
+
+    const next = scene.update(0)
+
+    expect(next).toBeNull()
+    expect(bullet.alive).toBe(false)
+  })
+
+  it('無敵が切れたフレームで通常BGMへ戻す呼び出しがちょうど1回だけ起きる', () => {
+    const g = makeContext()
+    const scene = new PlayScene(g)
+    freezeHazardSpawns(scene)
+    ;(scene as any).itemTimer = Number.MAX_SAFE_INTEGER
+    ;(scene as any).hands = []
+    ;(scene as any).bullets = []
+    ;(scene as any).items = []
+    ;(scene as any).inv = activateInvincible(initialInvincibleState()).state
+
+    // 無敵が切れるまで進め、そのあとも余分に回す
+    for (let i = 0; i < Math.ceil(INVINCIBLE_SEC * 60) + 60; i++) {
+      expect(scene.update(1 / 60)).toBeNull()
+    }
+
+    expect(g.soundSpy.bgmModes).toEqual(['normal'])
+  })
+
+  it('無敵中に LVUP しても無敵は継続する', () => {
+    const scene = new PlayScene(makeContext())
+    const player = (scene as any).player
+    player.hand = 'rock'
+    freezeHazardSpawns(scene)
+    ;(scene as any).itemTimer = Number.MAX_SAFE_INTEGER
+    ;(scene as any).inv = activateInvincible(initialInvincibleState()).state
+    ;(scene as any).bullets = []
+    ;(scene as any).items = []
+
+    // rock に勝つ手(paper)を3体ぶつける。通常なら1体目で GAME OVER になる。
+    for (let i = 0; i < 3; i++) {
+      ;(scene as any).hands = [new JankenHand(player.x, player.y, 0, 0, 'paper')]
+      expect(scene.update(0)).toBeNull()
+    }
+
+    expect((scene as any).levelState.level).toBe(2)
+    expect(isInvincible((scene as any).inv)).toBe(true)
+  })
+
+  it('場に星がある間は次の星が湧かず、消えてから ITEM_SPAWN_INTERVAL_SEC 後に湧く', () => {
+    const scene = new PlayScene(makeContext())
+    freezeHazardSpawns(scene)
+    ;(scene as any).hands = []
+    ;(scene as any).bullets = []
+    // 自機(中央)から離れた位置に置き、取得されないようにする
+    ;(scene as any).items = [new StarItem(50, 50)]
+    ;(scene as any).itemTimer = 0.0001
+
+    scene.update(0.5)
+    expect((scene as any).items.length).toBe(1)
+    // 場に星がある間はタイマーが間隔いっぱいに戻される
+    expect((scene as any).itemTimer).toBe(ITEM_SPAWN_INTERVAL_SEC)
+
+    // 星を寿命切れにすると update 内の filter で除去される
+    ;(scene as any).items[0].update(ITEM_LIFE_SEC)
+    scene.update(0)
+    expect((scene as any).items.length).toBe(0)
+
+    scene.update(ITEM_SPAWN_INTERVAL_SEC - 0.1)
+    expect((scene as any).items.length).toBe(0)
+    scene.update(0.2)
+    expect((scene as any).items.length).toBe(1)
   })
 })
 

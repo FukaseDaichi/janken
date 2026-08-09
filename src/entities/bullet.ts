@@ -18,7 +18,7 @@ export class Bullet {
     public y: number,
     private vx: number,
     private vy: number,
-    private type: BulletType,
+    public readonly type: BulletType,
   ) {}
 
   update(dtSec: number, player: { x: number; y: number }): void {
