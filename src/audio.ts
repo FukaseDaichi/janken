@@ -1,3 +1,27 @@
+export type BgmMode = 'normal' | 'invincible'
+
+interface BgmTrack {
+  notes: number[]
+  stepMs: number
+  type: OscillatorType
+  gain: number
+  durSec: number
+}
+
+/** normal は従来 startBgmTimer() に直書きされていた値をそのまま移したもので、
+ *  既存の聞こえ方は変わらない。invincible は1オクターブ上・倍テンポ・矩形波にして、
+ *  切り替わったことが一聴して分かるようにしている。 */
+export const BGM_TRACKS: Record<BgmMode, BgmTrack> = {
+  normal: {
+    notes: [262, 330, 392, 330, 294, 370, 440, 370],
+    stepMs: 220, type: 'triangle', gain: 0.03, durSec: 0.18,
+  },
+  invincible: {
+    notes: [523, 659, 784, 988, 784, 659, 880, 988],
+    stepMs: 110, type: 'square', gain: 0.045, durSec: 0.09,
+  },
+}
+
 export class Sound {
   private ctx: AudioContext | null = null
   private bgmTimer: number | null = null
@@ -9,6 +33,8 @@ export class Sound {
    *  （タブがフォーカスを取り戻しただけでタイトル画面から BGM が鳴り出す、
    *  という事故を避けるため）。 */
   private pausedByVisibility = false
+  /** 現在の BGM トラック。stopBgm() で 'normal' に戻す。 */
+  private bgmMode: BgmMode = 'normal'
 
   constructor() {
     if (typeof document !== 'undefined') {
@@ -62,6 +88,14 @@ export class Sound {
     ;[440, 349, 262, 196].forEach((f, i) => this.beep(f, 0.25, 'sawtooth', 0.08, i * 0.18))
   }
 
+  /** アイテム取得音。levelUp()(523/659/784/1047・triangle・0.09秒間隔)と
+   *  取り違えないよう、square の速い上昇3音にして最後だけ伸ばす。 */
+  powerUp(): void {
+    this.beep(784, 0.08, 'square', 0.09)
+    this.beep(1047, 0.08, 'square', 0.09, 0.05)
+    this.beep(1319, 0.22, 'square', 0.09, 0.1)
+  }
+
   startBgm(): void {
     this.bgmRunning = true
     this.pausedByVisibility = false
@@ -74,19 +108,33 @@ export class Sound {
   stopBgm(): void {
     this.bgmRunning = false
     this.pausedByVisibility = false
+    // Sound は GameContext 経由でシーンをまたいで共有される。ここで戻さないと、
+    // 無敵中に終わったプレイの次のプレイが無敵BGMで始まってしまう。
+    this.bgmMode = 'normal'
     this.clearBgmTimer()
+  }
+
+  /** BGM のトラックを切り替える。同じモードなら何もしない。
+   *  bgmTimer が動いているときだけ作り直す点が重要で、タブ非表示で止めている間は
+   *  モード変数だけ更新し、visibilitychange ハンドラが復帰時に新しいモードで鳴らす。 */
+  setBgmMode(mode: BgmMode): void {
+    if (this.bgmMode === mode) return
+    this.bgmMode = mode
+    if (this.bgmTimer === null) return
+    this.clearBgmTimer()
+    this.startBgmTimer()
   }
 
   private startBgmTimer(): void {
     if (this.bgmTimer !== null) return
-    const notes = [262, 330, 392, 330, 294, 370, 440, 370]
+    const track = BGM_TRACKS[this.bgmMode]
     let i = 0
     const step = () => {
-      this.beep(notes[i % notes.length], 0.18, 'triangle', 0.03)
+      this.beep(track.notes[i % track.notes.length], track.durSec, track.type, track.gain)
       i++
     }
     step()
-    this.bgmTimer = window.setInterval(step, 220)
+    this.bgmTimer = window.setInterval(step, track.stepMs)
   }
 
   private clearBgmTimer(): void {
