@@ -24,7 +24,6 @@ export class PlayScene implements Scene {
   private bulletTimer = 0
   private handTimer = 0
   private flashSec = 0
-  private shakeSec = 0
   private morphSec = 0
 
   constructor(private g: GameContext) {
@@ -35,7 +34,6 @@ export class PlayScene implements Scene {
     this.elapsedSec += dtSec
     this.score += timeScore(dtSec, this.levelState.level)
     this.flashSec = Math.max(0, this.flashSec - dtSec)
-    this.shakeSec = Math.max(0, this.shakeSec - dtSec)
     this.morphSec = Math.max(0, this.morphSec - dtSec)
 
     this.player.update(this.g.input, dtSec)
@@ -123,9 +121,6 @@ export class PlayScene implements Scene {
 
   draw(ctx: CanvasRenderingContext2D): void {
     ctx.save()
-    if (this.shakeSec > 0) {
-      ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12)
-    }
     this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)
 
     for (const h of this.hands) h.draw(ctx, this.g.assets)
@@ -149,6 +144,7 @@ export class PlayScene implements Scene {
   private drawHud(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = '#fff'
     ctx.textAlign = 'left'
+    ctx.textBaseline = 'alphabetic'
     ctx.font = 'bold 24px sans-serif'
     ctx.fillText(`SCORE ${Math.floor(this.score)}`, 16, 34)
     ctx.font = '18px sans-serif'
