@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>じゃんけん弾除け</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #111; display: grid; place-items: center; }
+    /* 内部解像度は 960x720 固定。ウィンドウの縦横どちらが制約になっても
+       4:3 を保ったまま最大限まで拡大/縮小する。 */
+    canvas {
+      width: min(100vw, calc(100vh * 4 / 3));
+      height: min(100vh, calc(100vw * 3 / 4));
+      aspect-ratio: 4 / 3;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="960" height="720"></canvas>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
