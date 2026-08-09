@@ -1,5 +1,6 @@
 import type { BulletType } from '../logic/difficulty'
 import { FIELD_W, FIELD_H } from './player'
+import { BULLET_COLORS } from '../render/theme'
 
 const MARGIN = 60
 /** curve 弾は速度を一定回転させ続けるため、フィールド内に収まる半径の円軌道に
@@ -60,6 +61,7 @@ export class Bullet {
   draw(ctx: CanvasRenderingContext2D): void {
     const ang = Math.atan2(this.vy, this.vx)
     const r = this.radius
+    const color = BULLET_COLORS[this.type]
     ctx.save()
     ctx.globalCompositeOperation = 'lighter'
     // 残光ストリーク(進行方向の逆へ伸びる)
@@ -67,8 +69,8 @@ export class Bullet {
       this.x, this.y,
       this.x - Math.cos(ang) * r * 5, this.y - Math.sin(ang) * r * 5,
     )
-    tail.addColorStop(0, 'rgba(190, 120, 255, 0.55)')
-    tail.addColorStop(1, 'rgba(190, 120, 255, 0)')
+    tail.addColorStop(0, `${color.trail}8c`)
+    tail.addColorStop(1, `${color.trail}00`)
     ctx.strokeStyle = tail
     ctx.lineWidth = r * 1.2
     ctx.lineCap = 'round'
@@ -79,8 +81,8 @@ export class Bullet {
     // 本体グロー
     const orb = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r * 1.6)
     orb.addColorStop(0, '#ffffff')
-    orb.addColorStop(0.35, '#e0b3ff')
-    orb.addColorStop(1, 'rgba(160, 60, 255, 0)')
+    orb.addColorStop(0.35, color.core)
+    orb.addColorStop(1, `${color.edge}00`)
     ctx.fillStyle = orb
     ctx.beginPath()
     ctx.arc(this.x, this.y, r * 1.6, 0, Math.PI * 2)

@@ -20,7 +20,7 @@ export function difficultyFor(level: number, elapsedSec: number): DifficultyPara
 
   return {
     bulletInterval: Math.max(0.12, 1.0 - 0.88 * p),
-    handInterval: Math.max(0.5, 3.0 - 2.5 * p),
+    handInterval: Math.max(0.45, 2.6 - 2.2 * p),
     speedMin: 80 + 100 * p,
     speedMax: Math.min(420, 160 + 260 * p),
     bulletTypes,
