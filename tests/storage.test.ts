@@ -20,6 +20,15 @@ describe('loadHighScore', () => {
   it('不正値は 0', () => {
     expect(loadHighScore(memoryStore({ [HIGHSCORE_KEY]: 'abc' }))).toBe(0)
   })
+  it('改ざんされた小数値をフロアする', () => {
+    expect(loadHighScore(memoryStore({ [HIGHSCORE_KEY]: '12.7' }))).toBe(12)
+  })
+  it('Infinity は 0', () => {
+    expect(loadHighScore(memoryStore({ [HIGHSCORE_KEY]: 'Infinity' }))).toBe(0)
+  })
+  it('負の値は 0', () => {
+    expect(loadHighScore(memoryStore({ [HIGHSCORE_KEY]: '-5' }))).toBe(0)
+  })
 })
 
 describe('saveHighScoreIfHigher', () => {
@@ -32,5 +41,15 @@ describe('saveHighScoreIfHigher', () => {
     const store = memoryStore({ [HIGHSCORE_KEY]: '100' })
     expect(saveHighScoreIfHigher(store, 50)).toBe(false)
     expect(store.data[HIGHSCORE_KEY]).toBe('100')
+  })
+  it('フロアした値がハイスコアに等しいなら保存せず false', () => {
+    const store = memoryStore({ [HIGHSCORE_KEY]: '10' })
+    expect(saveHighScoreIfHigher(store, 10.5)).toBe(false)
+    expect(store.data[HIGHSCORE_KEY]).toBe('10')
+  })
+  it('フロアした値で本当の記録更新を保存', () => {
+    const store = memoryStore({ [HIGHSCORE_KEY]: '10' })
+    expect(saveHighScoreIfHigher(store, 12.9)).toBe(true)
+    expect(store.data[HIGHSCORE_KEY]).toBe('12')
   })
 })
