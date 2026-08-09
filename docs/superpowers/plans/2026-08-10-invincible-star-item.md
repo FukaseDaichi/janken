@@ -18,6 +18,7 @@
 - 演出は 1 秒以内に収める(DESIGN.md §7)
 - `tsconfig.json` は `strict: true` かつ `noUnusedLocals: true`。`include` は `["src", "tests"]` なので**テストコードも型チェックの対象**。未使用の import / ローカル変数があると `npm run build` が落ちる
 - 各タスク完了時に `npm test` と `npm run build` の両方が通ること
+- ベースライン(このプラン作成時点、`c1d7297`): `npm test` が 43 tests 通過、`npm run build` 成功。`src/scenes/play.ts` / `src/audio.ts` / `src/entities/bullet.ts` は直近のタイトル画面改修では変更されていない
 - 数値定数(実測値): `INVINCIBLE_SEC = 8` / `ITEM_LIFE_SEC = 8` / `ITEM_SPAWN_INTERVAL_SEC = 22` / `ITEM_FIRST_SPAWN_SEC = 15` / `ITEM_RADIUS = 20` / `ITEM_SPAWN_MARGIN = 80` / `ITEM_MIN_DIST_FROM_PLAYER = 220`
 - 色: `STAR_COLORS = { core: '#fff3a8', base: '#ffd23e', glow: '#ffb03a' }`
 
@@ -1444,7 +1445,7 @@ git commit -m "feat: 無敵の残り時間リングと取得フラッシュを�
 - `src/entities/` — プレイヤー・弾・じゃんけんの手・アイテム（星）・パーティクル・衝突判定。
 ```
 
-`src/render/` の説明の後ろに1行追加:
+`src/assets.ts` の説明の後ろ、`src/input.ts` の説明の前に1行追加:
 
 ```markdown
 - `src/audio.ts` — WebAudio によるビープ生成。BGM は `BGM_TRACKS`（`normal` / `invincible`）をモードで切り替える。
