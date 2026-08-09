@@ -3,7 +3,8 @@ import { GameOverScene } from './gameover'
 import { drawNeonBackground } from '../render/background'
 import { drawSidePanel } from '../render/panel'
 import { outlinedText } from '../render/text'
-import { FONT_DISPLAY, COLORS, BULLET_COLORS, STAR_COLORS } from '../render/theme'
+import { FONT_DISPLAY, COLORS, BULLET_COLORS, STAR_COLORS, FLASH_RGB } from '../render/theme'
+import { drawInvincibleRing } from '../render/effects'
 import { Player, FIELD_W, FIELD_H } from '../entities/player'
 import { Bullet, spawnBullet } from '../entities/bullet'
 import { JankenHand } from '../entities/hand'
@@ -12,7 +13,7 @@ import { collides } from '../entities/collision'
 import { StarItem, pickItemSpawnPos, ITEM_SPAWN_INTERVAL_SEC, ITEM_FIRST_SPAWN_SEC } from '../entities/item'
 import {
   initialInvincibleState, isInvincible, activateInvincible, tickInvincible,
-  type InvincibleState,
+  INVINCIBLE_SEC, type InvincibleState,
 } from '../logic/invincible'
 import { judge, randomHand, randomOtherHand } from '../logic/janken'
 import { initialLevelState, addWin, WINS_PER_LEVEL, type LevelState } from '../logic/level'
@@ -30,7 +31,11 @@ export class PlayScene implements Scene {
   private elapsedSec = 0
   private bulletTimer = 0
   private handTimer = 0
+  /** 画面フラッシュ。色は FLASH_RGB の "R,G,B" 形式で持ち、
+   *  アルファは残り時間 / 全体時間から決める。 */
   private flashSec = 0
+  private flashMaxSec = 1
+  private flashRgb = FLASH_RGB.white
   private morphSec = 0
   private items: StarItem[] = []
   private itemTimer = ITEM_FIRST_SPAWN_SEC
@@ -77,6 +82,8 @@ export class PlayScene implements Scene {
       // BGM の切替は無敵が「始まった」ときだけ。再取得では鳴らし直さない。
       if (activated.justStarted) this.g.sound.setBgmMode('invincible')
       this.g.sound.powerUp()
+      // LVUP の白フラッシュと区別するためイエローにする
+      this.flash(FLASH_RGB.yellow, 0.25)
       this.particles.push(...burstParticles(it.x, it.y, STAR_COLORS.core, 20))
     }
 
@@ -108,9 +115,15 @@ export class PlayScene implements Scene {
     return null
   }
 
+  private flash(rgb: string, sec: number): void {
+    this.flashRgb = rgb
+    this.flashSec = sec
+    this.flashMaxSec = sec
+  }
+
   private levelUp(): void {
     this.player.hand = randomOtherHand(this.player.hand, Math.random)
-    this.flashSec = 0.35
+    this.flash(FLASH_RGB.white, 0.35)
     this.morphSec = 0.6
     this.g.sound.levelUp()
     this.particles.push(...burstParticles(this.player.x, this.player.y, '#3498db', 24))
@@ -182,10 +195,15 @@ export class PlayScene implements Scene {
     if (this.morphSec <= 0 || Math.floor(this.morphSec * 12) % 2 === 0) {
       this.player.draw(ctx, this.g.assets)
     }
+    // 無敵リングは morph の点滅条件の外に置く。無敵中に LVUP が起きたとき
+    // 自機と一緒にリングまで消えると、残り時間を見失うため。
+    if (isInvincible(this.inv)) {
+      drawInvincibleRing(ctx, this.player.x, this.player.y, this.player.radius, this.inv.remainingSec, INVINCIBLE_SEC)
+    }
     for (const p of this.particles) p.draw(ctx)
 
     if (this.flashSec > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${this.flashSec / 0.35 * 0.6})`
+      ctx.fillStyle = `rgba(${this.flashRgb},${(this.flashSec / this.flashMaxSec) * 0.6})`
       ctx.fillRect(0, 0, FIELD_W, FIELD_H)
     }
 

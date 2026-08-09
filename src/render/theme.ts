@@ -18,6 +18,14 @@ export const COLORS = {
   labelStrong: 'rgba(255, 255, 255, 0.7)',
 } as const
 
+/** 画面フラッシュ用。rgba() のアルファを毎フレーム変えるので hex ではなく
+ *  "R,G,B" 形式で持つ。値は COLORS の同名色と一致させること
+ *  (tests/theme.test.ts が対応を検証している)。 */
+export const FLASH_RGB: Record<'white' | 'yellow', string> = {
+  white: '255,255,255',
+  yellow: '255,210,62',
+}
+
 /** 手ごとのキーカラー。Record<Hand, ...> により全 Hand の網羅を型で保証する */
 export const HAND_COLORS: Record<Hand, { base: string; glow: string }> = {
   rock: { base: '#5ad14f', glow: '#8dff70' },
