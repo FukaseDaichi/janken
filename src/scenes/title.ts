@@ -8,12 +8,13 @@ import type { Hand } from '../logic/janken'
 
 const HANDS: Hand[] = ['rock', 'scissors', 'paper']
 
-/** 装飾用に漂う敵手の配置(決定的、当たり判定なし) */
+/** 装飾用に漂う敵手の配置(決定的、当たり判定なし)。ルールカードの帯(y 420-570)と
+ *  中央のプロンプト文字を避けて、四隅寄りに配置する。 */
 const FLOATERS: Array<{ hand: Hand; x: number; y: number; size: number; phase: number }> = [
-  { hand: 'rock', x: 0.09, y: 0.18, size: 110, phase: 0 },
-  { hand: 'paper', x: 0.08, y: 0.62, size: 130, phase: 2.1 },
-  { hand: 'scissors', x: 0.90, y: 0.20, size: 120, phase: 4.2 },
-  { hand: 'paper', x: 0.91, y: 0.60, size: 125, phase: 1.3 },
+  { hand: 'rock', x: 0.055, y: 0.16, size: 104, phase: 0 },
+  { hand: 'paper', x: 0.045, y: 0.90, size: 88, phase: 2.1 },
+  { hand: 'scissors', x: 0.945, y: 0.17, size: 112, phase: 4.2 },
+  { hand: 'paper', x: 0.955, y: 0.90, size: 92, phase: 1.3 },
 ]
 
 export class TitleScene implements Scene {
@@ -30,7 +31,7 @@ export class TitleScene implements Scene {
   draw(ctx: CanvasRenderingContext2D): void {
     const t = performance.now() / 1000
     ctx.save()
-    drawNeonBackground(ctx, CANVAS_W, CANVAS_H, t)
+    drawNeonBackground(ctx, CANVAS_W, CANVAS_H, t, { perspective: true })
 
     // 漂う手(ゆっくり上下)
     for (const f of FLOATERS) {

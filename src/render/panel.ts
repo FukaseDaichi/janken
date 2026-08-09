@@ -75,17 +75,17 @@ export function drawSidePanel(ctx: CanvasRenderingContext2D, assets: Assets, d: 
 
   // 倒せる手(緑グロー枠で強調)
   const target = beats(d.playerHand)
-  label('TARGET', 584)
+  label('TARGET', 572)
   ctx.strokeStyle = HAND_COLORS[target].glow
   ctx.lineWidth = 2.5
   ctx.shadowColor = HAND_COLORS[target].glow
   ctx.shadowBlur = 12
-  ctx.strokeRect(cx - 46, 602, 92, 92)
+  ctx.strokeRect(cx - 46, 588, 92, 92)
   ctx.shadowBlur = 0
-  assets.draw(ctx, `enemy-${target}`, cx, 648, 76)
+  assets.draw(ctx, `enemy-${target}`, cx, 634, 76)
   ctx.font = `14px ${FONT_DISPLAY}`
   ctx.fillStyle = HAND_COLORS[target].glow
-  ctx.fillText(`${HAND_LABEL[target]}を倒せる！`, cx, 702)
+  ctx.fillText(`${HAND_LABEL[target]}を倒せる！`, cx, 694)
 
   ctx.restore()
 }
