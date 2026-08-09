@@ -14,6 +14,9 @@ async function main(): Promise<void> {
   // 読み込みは通常数百ms程度なので、その間の最初の1打鍵を落としても
   // レスポンスの悪さとしては感じられない。
   const assets = await loadAssets()
+  // Webフォント(Dela Gothic One / Orbitron)のロードを待つ。失敗しても
+  // document.fonts.ready は resolve されるため起動はブロックされない。
+  await document.fonts.ready
   input.attach()
   const g = { input, assets, sound: new Sound(), storage: localStorage }
   new Game(ctx, new TitleScene(g)).start()

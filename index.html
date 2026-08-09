@@ -2,21 +2,23 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>じゃんけん弾除け</title>
+  <title>じゃんけんサバイバー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet" />
   <style>
-    html, body { margin: 0; height: 100%; background: #111; display: grid; place-items: center; }
-    /* 内部解像度は 960x720 固定。ウィンドウの縦横どちらが制約になっても
-       4:3 を保ったまま最大限まで拡大/縮小する。 */
+    html, body { margin: 0; height: 100%; background: #05030e; display: grid; place-items: center; }
+    /* 内部解像度は 1200x720 固定(フィールド960 + パネル240)。
+       ウィンドウの縦横どちらが制約になっても 5:3 を保ったまま最大限まで拡大/縮小する。 */
     canvas {
-      width: min(100vw, calc(100vh * 4 / 3));
-      height: min(100vh, calc(100vw * 3 / 4));
-      aspect-ratio: 4 / 3;
-      image-rendering: pixelated;
+      width: min(100vw, calc(100vh * 5 / 3));
+      height: min(100vh, calc(100vw * 3 / 5));
+      aspect-ratio: 5 / 3;
     }
   </style>
 </head>
 <body>
-  <canvas id="game" width="960" height="720"></canvas>
+  <canvas id="game" width="1200" height="720"></canvas>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
