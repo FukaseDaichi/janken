@@ -38,6 +38,11 @@ export const BULLET_COLORS: Record<BulletType, { core: string; trail: string; ed
   curve: { core: '#bff4fa', trail: '#37e0e8', edge: '#00a8c8' },
 }
 
+/** 無敵アイテム(星)のキーカラー。DESIGN.md §2 の「イエロー = 良いこと」に沿う。
+ *  base は COLORS.yellow と同値で、core は中心のハイライト、glow は外周グロー。
+ *  弾(紫/オレンジ/シアン)・手(緑/赤ピンク/青)のどれとも色相が重ならない。 */
+export const STAR_COLORS = { core: '#fff3a8', base: '#ffd23e', glow: '#ffb03a' }
+
 export const HAND_LABEL: Record<Hand, string> = { rock: 'グー', scissors: 'チョキ', paper: 'パー' }
 export const HAND_EMOJI: Record<Hand, string> = { rock: '✊', scissors: '✌️', paper: '✋' }
 
