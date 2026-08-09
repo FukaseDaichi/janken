@@ -175,12 +175,16 @@ export class PlayScene implements Scene {
     // ITEM_SPAWN_INTERVAL_SEC は「星が場から消えてから次が湧くまで」の時間になる。
     if (this.items.length > 0) {
       this.itemTimer = ITEM_SPAWN_INTERVAL_SEC
-      return
-    }
-    this.itemTimer -= dtSec
-    if (this.itemTimer <= 0) {
-      const { x, y } = pickItemSpawnPos(this.player.x, this.player.y, Math.random)
-      this.items.push(new StarItem(x, y))
+    } else {
+      this.itemTimer -= dtSec
+      if (this.itemTimer <= 0) {
+        // 湧かせたその場で戻す。次フレームの items.length チェックに任せると、
+        // 同じフレームで湧いて取られた星がタイマーを負のまま残し、次フレームで
+        // 二重にスポーンしうる。
+        this.itemTimer = ITEM_SPAWN_INTERVAL_SEC
+        const { x, y } = pickItemSpawnPos(this.player.x, this.player.y, Math.random)
+        this.items.push(new StarItem(x, y))
+      }
     }
   }
 

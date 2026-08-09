@@ -238,6 +238,8 @@ describe('PlayScene.update', () => {
 
     expect(next).toBeNull()
     expect(bullet.alive).toBe(false)
+    // 仕様 §1「無敵中に消した弾ではスコアは入らない」。dtSec=0 なので timeScore も 0。
+    expect((scene as any).score).toBe(0)
   })
 
   it('無敵中は負ける手も撃破でき、killBonus と勝利カウントが入る', () => {
@@ -335,6 +337,24 @@ describe('PlayScene.update', () => {
     expect((scene as any).items.length).toBe(0)
     scene.update(0.2)
     expect((scene as any).items.length).toBe(1)
+  })
+
+  it('星が湧いたフレームのうちに itemTimer が ITEM_SPAWN_INTERVAL_SEC に戻る', () => {
+    // 修正前は items.push() の後に itemTimer をリセットしておらず、次フレームの
+    // `items.length > 0` 分岐に入るまで負のまま残っていた。同じフレームで湧いた星が
+    // 即座に取得されると、次フレームでも itemTimer <= 0 のままとなり二重にスポーン
+    // しうる。湧かせたその場でリセットすることの回帰テスト。
+    const scene = new PlayScene(makeContext())
+    freezeHazardSpawns(scene)
+    ;(scene as any).hands = []
+    ;(scene as any).bullets = []
+    ;(scene as any).items = []
+    ;(scene as any).itemTimer = 0.0001
+
+    scene.update(0.5)
+
+    expect((scene as any).items.length).toBe(1)
+    expect((scene as any).itemTimer).toBe(ITEM_SPAWN_INTERVAL_SEC)
   })
 })
 
