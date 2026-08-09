@@ -15,7 +15,13 @@ export class GameOverScene implements Scene {
 
   update(dtSec: number): Scene | null {
     this.shakeSec = Math.max(0, this.shakeSec - dtSec)
-    if (this.g.input.consumeConfirm()) {
+    // シェイクが収まるまではリトライを受け付けない。ただし consumeConfirm() は
+    // 必ず呼んでラッチを毎フレーム排水する — ここで呼ばずに早期 return すると、
+    // 死亡直前に押されていた（あるいはシェイク中に押された）confirmEdge が
+    // 消費されずに残り、シェイク終了直後の1フレームで即リトライしてしまう。
+    const confirmed = this.g.input.consumeConfirm()
+    if (this.shakeSec > 0) return null
+    if (confirmed) {
       this.g.sound.startBgm()
       return new PlayScene(this.g)
     }

@@ -31,6 +31,12 @@ export class PlayScene implements Scene {
   }
 
   update(dtSec: number): Scene | null {
+    // プレイ中に押された Enter/Space はここで捨てる。PlayScene は confirmEdge を
+    // 消費しないため、消費し忘れるとラッチが残り続け、GameOverScene の最初の
+    // フレームで即座に消費されて GAME OVER 画面を一度も描画せず次の PlayScene
+    // に遷移してしまう（スコア表示が飛ぶ）。戻り値は使わないが意図的に破棄する。
+    this.g.input.consumeConfirm()
+
     this.elapsedSec += dtSec
     this.score += timeScore(dtSec, this.levelState.level)
     this.flashSec = Math.max(0, this.flashSec - dtSec)
@@ -62,7 +68,7 @@ export class PlayScene implements Scene {
       if (leveledUp) this.levelUp()
     }
 
-    this.bullets = this.bullets.filter((b) => b.alive && !b.isOffscreen())
+    this.bullets = this.bullets.filter((b) => b.alive && !b.shouldDespawn())
     this.hands = this.hands.filter((h) => h.alive && !h.isOffscreen())
     this.particles = this.particles.filter((p) => p.alive)
     return null

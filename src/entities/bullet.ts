@@ -3,6 +3,10 @@ import type { Assets } from '../assets'
 import { FIELD_W, FIELD_H } from './player'
 
 const MARGIN = 60
+/** curve 弾は速度を一定回転させ続けるため、フィールド内に収まる半径の円軌道に
+ *  乗ると isOffscreen() が一度も true にならず無限に生き続ける場合がある。
+ *  年齢が一定を超えたら軌道に関わらず強制的に消す。 */
+const MAX_AGE_SEC = 12
 
 export class Bullet {
   alive = true
@@ -39,8 +43,19 @@ export class Bullet {
     this.y += this.vy * dtSec
   }
 
-  isOffscreen(): boolean {
+  private isOffscreen(): boolean {
     return this.x < -MARGIN || this.x > FIELD_W + MARGIN || this.y < -MARGIN || this.y > FIELD_H + MARGIN
+  }
+
+  private isExpired(): boolean {
+    return this.ageSec >= MAX_AGE_SEC
+  }
+
+  /** 画面外に出た、または一定時間経過した弾はカリング対象。
+   *  curve 弾がフィールド内に収まる円軌道に乗って無限に生き続けるのを防ぐため、
+   *  isOffscreen だけでなく年齢もカリング条件に含める。 */
+  shouldDespawn(): boolean {
+    return this.isOffscreen() || this.isExpired()
   }
 
   draw(ctx: CanvasRenderingContext2D, assets: Assets): void {

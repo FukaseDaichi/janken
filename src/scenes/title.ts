@@ -15,6 +15,7 @@ export class TitleScene implements Scene {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
+    ctx.save()
     this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)
     ctx.fillStyle = 'rgba(0,0,0,0.55)'
     ctx.fillRect(0, 0, FIELD_W, FIELD_H)
@@ -37,5 +38,6 @@ export class TitleScene implements Scene {
     ctx.fillText('Enter / Space でスタート', FIELD_W / 2, 560)
     ctx.font = '20px sans-serif'
     ctx.fillText(`ハイスコア: ${loadHighScore(this.g.storage)}`, FIELD_W / 2, 630)
+    ctx.restore()
   }
 }

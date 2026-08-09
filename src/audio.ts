@@ -1,6 +1,34 @@
 export class Sound {
   private ctx: AudioContext | null = null
   private bgmTimer: number | null = null
+  /** startBgm()/stopBgm() から見た論理状態。タブが非表示の間も保持し、
+   *  「BGM は流すべきか」を bgmTimer の有無と分離して管理する。 */
+  private bgmRunning = false
+  /** タブが非表示になったことで bgmTimer を止めた場合のみ true。
+   *  再表示時にこれが立っていて bgmRunning も true のときだけ再開する
+   *  （タブがフォーカスを取り戻しただけでタイトル画面から BGM が鳴り出す、
+   *  という事故を避けるため）。 */
+  private pausedByVisibility = false
+
+  constructor() {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => this.handleVisibilityChange())
+    }
+  }
+
+  private handleVisibilityChange(): void {
+    if (document.hidden) {
+      if (this.bgmTimer !== null) {
+        this.clearBgmTimer()
+        this.pausedByVisibility = true
+      }
+      return
+    }
+    if (this.pausedByVisibility && this.bgmRunning) {
+      this.pausedByVisibility = false
+      this.startBgmTimer()
+    }
+  }
 
   private ensure(): AudioContext {
     if (!this.ctx) this.ctx = new AudioContext()
@@ -35,6 +63,21 @@ export class Sound {
   }
 
   startBgm(): void {
+    this.bgmRunning = true
+    this.pausedByVisibility = false
+    // 非表示タブ中に呼ばれた場合はここでは鳴らさない。visibilitychange の
+    // ハンドラが表示に戻ったタイミングで bgmRunning を見て開始する。
+    if (typeof document !== 'undefined' && document.hidden) return
+    this.startBgmTimer()
+  }
+
+  stopBgm(): void {
+    this.bgmRunning = false
+    this.pausedByVisibility = false
+    this.clearBgmTimer()
+  }
+
+  private startBgmTimer(): void {
     if (this.bgmTimer !== null) return
     const notes = [262, 330, 392, 330, 294, 370, 440, 370]
     let i = 0
@@ -46,7 +89,7 @@ export class Sound {
     this.bgmTimer = window.setInterval(step, 220)
   }
 
-  stopBgm(): void {
+  private clearBgmTimer(): void {
     if (this.bgmTimer !== null) {
       clearInterval(this.bgmTimer)
       this.bgmTimer = null
