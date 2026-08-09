@@ -32,14 +32,15 @@ export function drawNeonBackground(
     sky.addColorStop(1, '#1b0f3a')
   } else {
     // 見下ろし型は上下に意味の差がないため対称にする
-    sky.addColorStop(0, '#0a0618')
+    sky.addColorStop(0, COLORS.bgDeep)
     sky.addColorStop(0.5, '#150c33')
-    sky.addColorStop(1, '#0a0618')
+    sky.addColorStop(1, COLORS.bgDeep)
   }
   ctx.fillStyle = sky
   ctx.fillRect(0, 0, w, h)
 
-  // 浮遊光点の縦方向レンジは両モード共通(horizonY はレイアウト上の定数として維持)
+  // horizonY は遠近モードの地平線位置。浮遊光点の縦方向レンジは、遠近モードでは
+  // 地平線より上(horizonY)、見下ろしモードでは画面全体(h)に散らす(下記参照)。
   const horizonY = h * 0.42
 
   if (perspective) {
@@ -80,20 +81,20 @@ export function drawNeonBackground(
     // 4本ごとに明るい線を入れて広さの手がかりにする。消失点を作らないことで、
     // プレイヤーが平面上を動いているという読み取りを壊さない。
     const CELL = 60
-    const offset = (timeSec * 12) % CELL
+    const offset = (timeSec * 12) % (CELL * 4)
     ctx.lineWidth = 1
-    for (let x = -CELL; x <= w + CELL; x += CELL) {
+    for (let x = -CELL * 4; x <= w + CELL; x += CELL) {
       const px = x + offset
-      const major = Math.round((px - offset) / CELL) % 4 === 0
+      const major = Math.round(x / CELL) % 4 === 0
       ctx.strokeStyle = major ? 'rgba(170, 100, 255, 0.38)' : 'rgba(140, 80, 230, 0.16)'
       ctx.beginPath()
       ctx.moveTo(px, 0)
       ctx.lineTo(px, h)
       ctx.stroke()
     }
-    for (let y = -CELL; y <= h + CELL; y += CELL) {
+    for (let y = -CELL * 4; y <= h + CELL; y += CELL) {
       const py = y + offset
-      const major = Math.round((py - offset) / CELL) % 4 === 0
+      const major = Math.round(y / CELL) % 4 === 0
       ctx.strokeStyle = major ? 'rgba(170, 100, 255, 0.38)' : 'rgba(140, 80, 230, 0.16)'
       ctx.beginPath()
       ctx.moveTo(0, py)
@@ -111,7 +112,7 @@ export function drawNeonBackground(
   // 浮遊光点(位置は決定的に散らし、明滅だけ timeSec で揺らす)
   for (let k = 0; k < 24; k++) {
     const px = ((k * 379) % 997) / 997 * w
-    const py = ((k * 613) % 991) / 991 * horizonY
+    const py = ((k * 613) % 991) / 991 * (perspective ? horizonY : h)
     const tw = 0.4 + 0.6 * Math.abs(Math.sin(timeSec * 1.3 + k))
     ctx.globalAlpha = 0.25 * tw
     ctx.fillStyle = k % 3 === 0 ? COLORS.cyan : k % 3 === 1 ? '#c07dff' : COLORS.yellow

@@ -3,9 +3,14 @@ import { TitleScene } from './scenes/title'
 import { Input } from './input'
 import { loadAssets } from './assets'
 import { Sound } from './audio'
+import { CANVAS_W, CANVAS_H } from './render/theme'
 
 async function main(): Promise<void> {
   const canvas = document.getElementById('game') as HTMLCanvasElement
+  // 内部解像度の情報源は theme.ts に一本化する。index.html の width/height 属性は
+  // 初期描画のちらつきを避けるための初期値で、実値はここで上書きする。
+  canvas.width = CANVAS_W
+  canvas.height = CANVAS_H
   const ctx = canvas.getContext('2d')!
   const input = new Input()
   // アセット読み込み完了後にアタッチする。読み込み中に押された Enter/Space は

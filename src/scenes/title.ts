@@ -49,12 +49,13 @@ export class TitleScene implements Scene {
       ctx.font = '28px sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
+      ctx.fillStyle = COLORS.white
       ctx.fillText(HAND_EMOJI[hand], ex, ey)
     })
 
     // ロゴ2段
     outlinedText(ctx, 'じゃんけん', cx, 170, {
-      size: 84, font: FONT_DISPLAY, fill: '#ffffff',
+      size: 84, font: FONT_DISPLAY, fill: COLORS.white,
       outline: '#000', outlineWidth: 16, shadowColor: 'rgba(0,0,0,0.7)', shadowOffset: 7,
     })
     const grad = ctx.createLinearGradient(0, 230, 0, 320)
@@ -65,7 +66,7 @@ export class TitleScene implements Scene {
       outline: '#000', outlineWidth: 18, shadowColor: 'rgba(0,0,0,0.7)', shadowOffset: 8,
     })
     outlinedText(ctx, '― 勝てる手で、弾をかいくぐれ！ ―', cx, 352, {
-      size: 24, font: FONT_DISPLAY, fill: '#ffffff', outline: '#000', outlineWidth: 6,
+      size: 24, font: FONT_DISPLAY, fill: COLORS.white, outline: '#000', outlineWidth: 6,
     })
 
     // ルールカード4枚
@@ -97,7 +98,7 @@ export class TitleScene implements Scene {
       card.lines.forEach((line, j) => {
         const emphasis = line.includes('GAME OVER') || line.includes('LEVEL UP')
         ctx.font = `${emphasis ? 20 : 15}px ${FONT_DISPLAY}`
-        ctx.fillStyle = line.includes('GAME OVER') ? COLORS.red : line.includes('LEVEL UP') ? COLORS.yellow : '#fff'
+        ctx.fillStyle = line.includes('GAME OVER') ? COLORS.red : line.includes('LEVEL UP') ? COLORS.yellow : COLORS.white
         ctx.fillText(line, x + cardW / 2, y + 66 + j * 26)
       })
     })
@@ -108,7 +109,7 @@ export class TitleScene implements Scene {
     }
     ctx.font = `700 18px ${FONT_NUM}`
     ctx.textAlign = 'center'
-    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    ctx.fillStyle = COLORS.labelStrong
     ctx.fillText(`HIGH SCORE  ${loadHighScore(this.g.storage).toLocaleString('en-US')}`, cx, 672)
 
     ctx.restore()

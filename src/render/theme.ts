@@ -13,6 +13,8 @@ export const COLORS = {
   white: '#ffffff',
   panelBg: 'rgba(10, 8, 30, 0.92)',
   panelBorder: '#5a3fd0',
+  label: 'rgba(255, 255, 255, 0.55)',
+  labelStrong: 'rgba(255, 255, 255, 0.7)',
 } as const
 
 /** 手ごとのキーカラー。Record<Hand, ...> により全 Hand の網羅を型で保証する */

@@ -45,8 +45,8 @@ export class GameOverScene implements Scene {
     // GAME OVER: 赤袋文字 + グリッチ風の色ずれ(赤/シアンを左右にずらして重ねる)
     const gy = 200
     ctx.globalAlpha = 0.55
-    outlinedText(ctx, 'GAME OVER', cx - 5, gy, { size: 88, font: FONT_DISPLAY, fill: COLORS.red, outline: 'transparent', outlineWidth: 0.1 })
-    outlinedText(ctx, 'GAME OVER', cx + 5, gy, { size: 88, font: FONT_DISPLAY, fill: COLORS.cyan, outline: 'transparent', outlineWidth: 0.1 })
+    outlinedText(ctx, 'GAME OVER', cx - 13, gy, { size: 88, font: FONT_DISPLAY, fill: COLORS.red, outline: 'transparent', outlineWidth: 0.1 })
+    outlinedText(ctx, 'GAME OVER', cx + 13, gy, { size: 88, font: FONT_DISPLAY, fill: COLORS.cyan, outline: 'transparent', outlineWidth: 0.1 })
     ctx.globalAlpha = 1
     outlinedText(ctx, 'GAME OVER', cx, gy, {
       size: 88, font: FONT_DISPLAY, fill: COLORS.red,
@@ -69,18 +69,18 @@ export class GameOverScene implements Scene {
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.font = `700 16px ${FONT_NUM}`
-    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.fillStyle = COLORS.label
     ctx.fillText('SCORE', cx, py + 40)
     neonText(ctx, Math.floor(this.score).toLocaleString('en-US'), cx, py + 78, { size: 40, font: FONT_NUM, color: COLORS.cyan })
     ctx.font = `700 16px ${FONT_NUM}`
-    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.fillStyle = COLORS.label
     ctx.fillText(`LV. ${String(this.level).padStart(2, '0')}`, cx, py + 122)
     if (this.isNewRecord) {
       ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 6)
       neonText(ctx, '★ NEW RECORD ★', cx, py + 170, { size: 26, font: FONT_DISPLAY, color: COLORS.yellow })
       ctx.globalAlpha = 1
     } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      ctx.fillStyle = COLORS.labelStrong
       ctx.font = `700 16px ${FONT_NUM}`
       ctx.fillText(`HIGH SCORE  ${loadHighScore(this.g.storage).toLocaleString('en-US')}`, cx, py + 170)
     }

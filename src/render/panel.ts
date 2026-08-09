@@ -17,6 +17,12 @@ export function drawSidePanel(ctx: CanvasRenderingContext2D, assets: Assets, d: 
   const x = PANEL_X
   ctx.save()
 
+  // パネル地は半透明なので、まず不透明な下地を敷く。フィールド外(x > 960)に
+  // スポーンした敵・弾がここに描かれること、および game.ts の描画ループが
+  // canvas をクリアしないことから、下地がないと前フレームの残像が透けて残る。
+  ctx.fillStyle = COLORS.bgDeep
+  ctx.fillRect(x, 0, PANEL_W, CANVAS_H)
+
   // パネル地(フィールド外はみ出し描画をここで覆う)
   ctx.fillStyle = COLORS.panelBg
   ctx.fillRect(x, 0, PANEL_W, CANVAS_H)
@@ -29,7 +35,7 @@ export function drawSidePanel(ctx: CanvasRenderingContext2D, assets: Assets, d: 
     ctx.font = `700 15px ${FONT_NUM}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.fillStyle = COLORS.label
     ctx.fillText(text, cx, y)
   }
 
