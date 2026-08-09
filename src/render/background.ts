@@ -3,6 +3,9 @@ import { COLORS } from './theme'
 export interface NeonBackgroundOpts {
   /** true でタイトル画面用の遠近グリッド、false(既定)で見下ろし型のフラットグリッド */
   perspective?: boolean
+  /** 地平線の高さ(画面高に対する比率、既定 0.42)。perspective 時のみ意味を持つ。
+   *  タイトル画面はヒーロー画像の下端に地平線を合わせ、看板の下に床が広がる構図にする。 */
+  horizonRatio?: number
 }
 
 /**
@@ -41,7 +44,7 @@ export function drawNeonBackground(
 
   // horizonY は遠近モードの地平線位置。浮遊光点の縦方向レンジは、遠近モードでは
   // 地平線より上(horizonY)、見下ろしモードでは画面全体(h)に散らす(下記参照)。
-  const horizonY = h * 0.42
+  const horizonY = h * (opts.horizonRatio ?? 0.42)
 
   if (perspective) {
     // 床グリッド(画面下半分、消失点は画面中央やや上)

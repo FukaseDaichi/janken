@@ -28,8 +28,17 @@ npm run build              # tsc --noEmit で型チェック後に vite build
 - `src/logic/` — 純粋ロジック（じゃんけん勝敗判定、難易度曲線、レベル、スコア）。DOM/Canvas 非依存で、テストは主にここと `src/entities/` を対象にしている。
 - `src/entities/` — プレイヤー・弾・じゃんけんの手・パーティクル・衝突判定。
 - `src/render/` — 描画ユーティリティとテーマ。**内部解像度（CANVAS_W/H）や色などの定数は `src/render/theme.ts` に一本化**されている。index.html 側の canvas 属性は初期値にすぎない。
+- `src/assets.ts` — 画像のロード。ファイル名は `IMAGE_FILES` に集約。読み込み失敗時は `Assets.get()` が undefined を返し、呼び出し側が代替描画にフォールバックする。
 - `src/input.ts` — キー入力。Enter/Space はエッジラッチ方式（`confirmEdge`）。
 - `src/storage.ts` — ハイスコアの永続化。
+
+## タイトル画面のヒーロー画像
+
+タイトル画面は `public/assets/hero-title.webp`（ロゴ看板）を主役に構成する。元絵は
+`docs/reference/title.png`、書き出しは `python3 tools/make-hero.py`（要 Pillow）。
+黒背景の発光ロゴなので **screen 合成**で背景に重ねており、書き出し時に黒を 0 まで潰して
+外周をフェザーしてある。背景の遠近グリッドの地平線は看板の下端（`FLOOR_Y`）に合わせて
+いるので、片方の座標を動かすときはもう片方も見ること。
 
 ## ゲームルール（ロジック変更時の前提）
 

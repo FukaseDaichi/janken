@@ -43,3 +43,6 @@ export const HAND_EMOJI: Record<Hand, string> = { rock: '✊', scissors: '✌️
 
 export const FONT_DISPLAY = '"Dela Gothic One", sans-serif'
 export const FONT_NUM = '"Orbitron", sans-serif'
+/** 小さな和文用。Dela Gothic One は極太の見出し書体で 15px 以下だと漢字が潰れるため、
+ *  インストカードのような小さい和文は OS 標準の UI ゴシックで組む。 */
+export const FONT_BODY = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif'
