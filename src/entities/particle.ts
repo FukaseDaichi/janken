@@ -26,11 +26,15 @@ export class Particle {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
+    const t = Math.max(0, this.lifeSec / this.maxLifeSec)
     ctx.save()
-    ctx.globalAlpha = Math.max(0, this.lifeSec / this.maxLifeSec)
+    ctx.globalCompositeOperation = 'lighter'
+    ctx.globalAlpha = t
     ctx.fillStyle = this.color
+    ctx.shadowColor = this.color
+    ctx.shadowBlur = 8
     ctx.beginPath()
-    ctx.arc(this.x, this.y, 4, 0, Math.PI * 2)
+    ctx.arc(this.x, this.y, 2 + 3 * t, 0, Math.PI * 2)
     ctx.fill()
     ctx.restore()
   }
