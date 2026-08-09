@@ -12,7 +12,7 @@
 
 - `logic/` 配下、`entities/*` の update・衝突判定、`input.ts`、`storage.ts`、`audio.ts`、シーン遷移の変更
 - モバイル対応・タッチ操作
-- リファレンス画像そのものの再現(3Dレンダー質感)。キャラはベクター調で再解釈する
+- キャラ画像の手描き・コード描画(画像は Codex imagegen による AI 生成に一本化)
 
 ## アートディレクション
 
@@ -83,14 +83,17 @@
 - 中央パネル: スコア・到達レベル・ハイスコア。更新時は「★ NEW RECORD ★」がネオン点滅(sin波でalpha)
 - 「PRESS ENTER / SPACE — RETRY」点滅
 
-## キャラ素材の再生成(Codex 担当)
+## キャラ素材の再生成(Codex imagegen 担当)
 
-- Codex に依頼する成果物: `tools/generate-sprites.mjs`(Node スクリプト)
-  - SVG 文字列で手キャラ 6 種を定義し、`@resvg/resvg-js`(devDependency 追加)で PNG 化して `public/assets/` に出力
-  - スタイル: セミフラットなベクター調。太い黒アウトライン、表情つき(敵=怒り眉+への字 or 叫び、自機=元気な目)、本体色は上記キーカラー、内側グラデ+ハイライトで立体感
-  - 出力: `player-rock/scissors/paper.png`、`enemy-rock/scissors/paper.png` を **256×256**(現128×128から高解像度化。描画側は size 指定なので影響なし)
-  - `bullet.png` / `background.png` は生成しない(コード描画に移行)。ファイルは削除し、`assets.ts` の `SpriteName` から `bullet` / `background` を外す
-- 生成結果が気に入らない場合、ユーザーが画像生成AIで作った同名 PNG を置くだけで差し替え可能(この互換性は維持する)
+- Codex CLI の組み込み `imagegen` スキル(`image_gen` ツール、gpt-image-2)で**ビットマップ画像を直接生成**する
+- **参考画像**: ユーザー提供のキービジュアル(ネオンアーケード調)を `docs/reference/` に置き、Codex にスタイル参照として渡す
+- **並行生成**: 複数の Codex サブエージェントを並行起動し、それぞれ別プロンプト方針(例: 参考画像忠実 / よりデフォルメ / より発光強め)で候補セットを生成 → 全候補を見比べて最良セットを採用
+- 生成対象: `player-rock/scissors/paper.png`、`enemy-rock/scissors/paper.png` の6種
+  - スタイル: 参考画像準拠の3Dレンダー調。グー=緑、チョキ=ピンク、パー=青。敵=怒り顔、自機=元気/凛々しい顔。ネオン発光の縁
+  - **透過背景必須**: 組み込みモードでフラットなクロマキー背景で生成 → `remove_chroma_key.py` でアルファ化(imagegen スキルの標準手順)
+  - サイズ: 256×256 以上で生成し必要ならリサイズ(描画側は size 指定なので解像度変更の影響なし)
+- `bullet.png` / `background.png` は生成しない(コード描画に移行)。ファイルは削除し、`assets.ts` の `SpriteName` から `bullet` / `background` を外す
+- 採用後も、同名 PNG を置くだけで手動差し替え可能(この互換性は維持する)
 
 ## エラー処理
 
@@ -106,6 +109,6 @@
 
 ## 変更ファイル一覧(見込み)
 
-- 変更: `index.html`, `src/main.ts`, `src/assets.ts`, `src/scenes/{title,play,gameover}.ts`, `src/entities/{bullet,hand,player,particle}.ts`(draw のみ), `package.json`(devDep)
-- 新規: `src/render/{theme,background,panel,text}.ts`, `tools/generate-sprites.mjs`
+- 変更: `index.html`, `src/main.ts`, `src/assets.ts`, `src/scenes/{title,play,gameover}.ts`, `src/entities/{bullet,hand,player,particle}.ts`(draw のみ)
+- 新規: `src/render/{theme,background,panel,text}.ts`, `docs/reference/`(参考画像)
 - 削除: `public/assets/{background,bullet}.png`(生成後に旧手PNGも上書き)
