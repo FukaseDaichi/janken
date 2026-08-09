@@ -25,10 +25,11 @@ npm run build              # tsc --noEmit で型チェック後に vite build
 
 レイヤー分離:
 
-- `src/logic/` — 純粋ロジック（じゃんけん勝敗判定、難易度曲線、レベル、スコア）。DOM/Canvas 非依存で、テストは主にここと `src/entities/` を対象にしている。
-- `src/entities/` — プレイヤー・弾・じゃんけんの手・パーティクル・衝突判定。
+- `src/logic/` — 純粋ロジック（じゃんけん勝敗判定、難易度曲線、レベル、スコア、無敵状態）。DOM/Canvas 非依存で、テストは主にここと `src/entities/` を対象にしている。
+- `src/entities/` — プレイヤー・弾・じゃんけんの手・アイテム（星）・パーティクル・衝突判定。
 - `src/render/` — 描画ユーティリティとテーマ。**内部解像度（CANVAS_W/H）や色などの定数は `src/render/theme.ts` に一本化**されている。index.html 側の canvas 属性は初期値にすぎない。
 - `src/assets.ts` — 画像のロード。ファイル名は `IMAGE_FILES` に集約。読み込み失敗時は `Assets.get()` が undefined を返し、呼び出し側が代替描画にフォールバックする。
+- `src/audio.ts` — WebAudio によるビープ生成。BGM は `BGM_TRACKS`（`normal` / `invincible`）をモードで切り替える。
 - `src/input.ts` — キー入力。Enter/Space はエッジラッチ方式（`confirmEdge`）。
 - `src/storage.ts` — ハイスコアの永続化。
 
@@ -44,3 +45,4 @@ npm run build              # tsc --noEmit で型チェック後に vite build
 
 - 弾に当たると GAME OVER。じゃんけんの手は「勝てる手」のみ体当たりで倒せる（あいこ・負けは GAME OVER）。
 - 3勝で LVUP、形態がランダムに変わりスコア倍率が上がる。
+- 一定間隔で星アイテムが出現し、取得すると 8 秒間無敵になり BGM が切り替わる。無敵中は触れた弾が消え、じゃんけんの勝敗を無視して手を倒せる（撃破ボーナスと勝利カウントは通常どおり入る）。
