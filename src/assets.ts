@@ -1,12 +1,17 @@
+import { HAND_COLORS } from './render/theme'
+
 export type SpriteName =
   | 'player-rock' | 'player-scissors' | 'player-paper'
   | 'enemy-rock' | 'enemy-scissors' | 'enemy-paper'
-  | 'bullet' | 'background'
 
 const FALLBACK_EMOJI: Record<SpriteName, string> = {
   'player-rock': '✊', 'player-scissors': '✌️', 'player-paper': '✋',
   'enemy-rock': '✊', 'enemy-scissors': '✌️', 'enemy-paper': '✋',
-  bullet: '💢', background: '',
+}
+
+const HAND_OF: Record<SpriteName, keyof typeof HAND_COLORS> = {
+  'player-rock': 'rock', 'player-scissors': 'scissors', 'player-paper': 'paper',
+  'enemy-rock': 'rock', 'enemy-scissors': 'scissors', 'enemy-paper': 'paper',
 }
 
 export class Assets {
@@ -18,37 +23,23 @@ export class Assets {
       ctx.drawImage(img, x - size / 2, y - size / 2, size, size)
       return
     }
-    // フォールバック: 敵は赤円、味方は青円の上に絵文字
-    // 'background' はここでは描かない（drawBackground が担当する）
-    if (name !== 'background') {
-      ctx.save()
-      ctx.fillStyle = name.startsWith('enemy') ? '#c0392b' : name === 'bullet' ? '#8e44ad' : '#2980b9'
-      ctx.beginPath()
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.font = `${size * 0.6}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(FALLBACK_EMOJI[name], x, y)
-      ctx.restore()
-    }
-  }
-
-  drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-    const img = this.images.background
-    if (img) {
-      ctx.drawImage(img, 0, 0, w, h)
-    } else {
-      ctx.fillStyle = '#1a1a2e'
-      ctx.fillRect(0, 0, w, h)
-    }
+    // フォールバック: 手のキーカラー円 + 絵文字
+    ctx.save()
+    ctx.fillStyle = HAND_COLORS[HAND_OF[name]].base
+    ctx.beginPath()
+    ctx.arc(x, y, size / 2, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.font = `${size * 0.6}px sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(FALLBACK_EMOJI[name], x, y)
+    ctx.restore()
   }
 }
 
 const NAMES: SpriteName[] = [
   'player-rock', 'player-scissors', 'player-paper',
   'enemy-rock', 'enemy-scissors', 'enemy-paper',
-  'bullet', 'background',
 ]
 
 function loadImage(name: SpriteName): Promise<[SpriteName, HTMLImageElement | undefined]> {

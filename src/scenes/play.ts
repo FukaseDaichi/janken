@@ -1,5 +1,6 @@
 import type { Scene, GameContext } from '../game'
 import { GameOverScene } from './gameover'
+import { drawNeonBackground } from '../render/background'
 import { Player, FIELD_W, FIELD_H } from '../entities/player'
 import { Bullet, spawnBullet } from '../entities/bullet'
 import { JankenHand } from '../entities/hand'
@@ -127,10 +128,10 @@ export class PlayScene implements Scene {
 
   draw(ctx: CanvasRenderingContext2D): void {
     ctx.save()
-    this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)
+    drawNeonBackground(ctx, FIELD_W, FIELD_H, 0)
 
     for (const h of this.hands) h.draw(ctx, this.g.assets)
-    for (const b of this.bullets) b.draw(ctx, this.g.assets)
+    for (const b of this.bullets) b.draw(ctx)
 
     // 形態変化アニメ: 点滅
     if (this.morphSec <= 0 || Math.floor(this.morphSec * 12) % 2 === 0) {

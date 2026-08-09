@@ -2,6 +2,7 @@ import type { Scene, GameContext } from '../game'
 import { loadHighScore } from '../storage'
 import { PlayScene } from './play'
 import { FIELD_W, FIELD_H } from '../entities/player'
+import { drawNeonBackground } from '../render/background'
 
 export class GameOverScene implements Scene {
   private shakeSec = 0.4
@@ -33,7 +34,7 @@ export class GameOverScene implements Scene {
     if (this.shakeSec > 0) {
       ctx.translate((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14)
     }
-    this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)
+    drawNeonBackground(ctx, FIELD_W, FIELD_H, 0)
     ctx.fillStyle = 'rgba(0,0,0,0.7)'
     ctx.fillRect(0, 0, FIELD_W, FIELD_H)
     ctx.textAlign = 'center'

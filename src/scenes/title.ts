@@ -2,6 +2,7 @@ import type { Scene, GameContext } from '../game'
 import { loadHighScore } from '../storage'
 import { PlayScene } from './play'
 import { FIELD_W, FIELD_H } from '../entities/player'
+import { drawNeonBackground } from '../render/background'
 
 export class TitleScene implements Scene {
   constructor(private g: GameContext) {}
@@ -16,7 +17,7 @@ export class TitleScene implements Scene {
 
   draw(ctx: CanvasRenderingContext2D): void {
     ctx.save()
-    this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)
+    drawNeonBackground(ctx, FIELD_W, FIELD_H, 0)
     ctx.fillStyle = 'rgba(0,0,0,0.55)'
     ctx.fillRect(0, 0, FIELD_W, FIELD_H)
     ctx.fillStyle = '#fff'

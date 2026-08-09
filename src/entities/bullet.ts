@@ -1,5 +1,4 @@
 import type { BulletType } from '../logic/difficulty'
-import type { Assets } from '../assets'
 import { FIELD_W, FIELD_H } from './player'
 
 const MARGIN = 60
@@ -58,8 +57,13 @@ export class Bullet {
     return this.isOffscreen() || this.isExpired()
   }
 
-  draw(ctx: CanvasRenderingContext2D, assets: Assets): void {
-    assets.draw(ctx, 'bullet', this.x, this.y, this.radius * 2.6)
+  draw(ctx: CanvasRenderingContext2D): void {
+    ctx.save()
+    ctx.fillStyle = '#c07dff'
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
   }
 }
 
