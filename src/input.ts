@@ -10,7 +10,10 @@ export class Input {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault()
     })
     window.addEventListener('keyup', (e) => this.pressed.delete(e.code))
-    window.addEventListener('blur', () => this.pressed.clear())
+    window.addEventListener('blur', () => {
+      this.pressed.clear()
+      this.confirmEdge = false
+    })
   }
 
   get dx(): number {

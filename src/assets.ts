@@ -19,7 +19,9 @@ export class Assets {
       return
     }
     // フォールバック: 敵は赤円、味方は青円の上に絵文字
+    // 'background' はここでは描かない（drawBackground が担当する）
     if (name !== 'background') {
+      ctx.save()
       ctx.fillStyle = name.startsWith('enemy') ? '#c0392b' : name === 'bullet' ? '#8e44ad' : '#2980b9'
       ctx.beginPath()
       ctx.arc(x, y, size / 2, 0, Math.PI * 2)
@@ -28,6 +30,7 @@ export class Assets {
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillText(FALLBACK_EMOJI[name], x, y)
+      ctx.restore()
     }
   }
 
