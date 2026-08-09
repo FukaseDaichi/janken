@@ -56,7 +56,6 @@ function makeContext(input?: Input): GameContext {
 
   const assets = {
     draw: () => {},
-    drawBackground: () => {},
   } as unknown as Assets
 
   const sound = {

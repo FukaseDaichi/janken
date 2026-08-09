@@ -1,6 +1,7 @@
 import type { Hand } from '../logic/janken'
 import type { Input } from '../input'
 import type { Assets } from '../assets'
+import { HAND_COLORS } from '../render/theme'
 
 export const FIELD_W = 960
 export const FIELD_H = 720
@@ -26,6 +27,18 @@ export class Player {
   }
 
   draw(ctx: CanvasRenderingContext2D, assets: Assets): void {
+    const glow = HAND_COLORS[this.hand].glow
+    const r = this.radius * 1.8
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r)
+    g.addColorStop(0, `${glow}55`)
+    g.addColorStop(1, `${glow}00`)
+    ctx.fillStyle = g
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
     assets.draw(ctx, `player-${this.hand}`, this.x, this.y, this.radius * 2.4)
   }
 }

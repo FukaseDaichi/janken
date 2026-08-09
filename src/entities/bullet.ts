@@ -1,5 +1,4 @@
 import type { BulletType } from '../logic/difficulty'
-import type { Assets } from '../assets'
 import { FIELD_W, FIELD_H } from './player'
 
 const MARGIN = 60
@@ -58,8 +57,35 @@ export class Bullet {
     return this.isOffscreen() || this.isExpired()
   }
 
-  draw(ctx: CanvasRenderingContext2D, assets: Assets): void {
-    assets.draw(ctx, 'bullet', this.x, this.y, this.radius * 2.6)
+  draw(ctx: CanvasRenderingContext2D): void {
+    const ang = Math.atan2(this.vy, this.vx)
+    const r = this.radius
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    // 残光ストリーク(進行方向の逆へ伸びる)
+    const tail = ctx.createLinearGradient(
+      this.x, this.y,
+      this.x - Math.cos(ang) * r * 5, this.y - Math.sin(ang) * r * 5,
+    )
+    tail.addColorStop(0, 'rgba(190, 120, 255, 0.55)')
+    tail.addColorStop(1, 'rgba(190, 120, 255, 0)')
+    ctx.strokeStyle = tail
+    ctx.lineWidth = r * 1.2
+    ctx.lineCap = 'round'
+    ctx.beginPath()
+    ctx.moveTo(this.x, this.y)
+    ctx.lineTo(this.x - Math.cos(ang) * r * 5, this.y - Math.sin(ang) * r * 5)
+    ctx.stroke()
+    // 本体グロー
+    const orb = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r * 1.6)
+    orb.addColorStop(0, '#ffffff')
+    orb.addColorStop(0.35, '#e0b3ff')
+    orb.addColorStop(1, 'rgba(160, 60, 255, 0)')
+    ctx.fillStyle = orb
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, r * 1.6, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
   }
 }
 

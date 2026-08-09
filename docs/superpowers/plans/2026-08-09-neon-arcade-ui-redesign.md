@@ -380,10 +380,11 @@ export async function loadAssets(): Promise<Assets> {
 }
 ```
 
-注意: `drawBackground` を削除するため、この時点では各シーンがまだ参照していてビルドが落ちる。**Task 5〜9 は連続して実施し、シーン側の置き換え(Task 7〜9)まで進めてからビルド確認する**……のではなく、ビルドを常に通すため、このタスクでは `drawBackground` を**残したまま** `SpriteName` から `bullet`/`background` だけ外すことはできない(型エラーになる)。よって次の順で1コミットにまとめる:
-1. 上記の assets.ts 書き換え
-2. 同コミット内で、シーン3ファイルの `this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)` を `drawNeonBackground(ctx, FIELD_W, FIELD_H, 0)` に仮置換(import 追加。時間は Task 7〜9 で配線)
-3. `bullet.ts` の `assets.draw(ctx, 'bullet', ...)` を仮の円描画に置換(Task 6 で本実装):
+**重要**: `Assets.drawBackground` と `SpriteName` の `bullet`/`background` を削除すると、それらを参照している既存コードが型エラーになる。ビルドを通すため、**以下 1〜4 をすべて同一コミットで行う**。
+
+1. 上記の `assets.ts` 全面書き換え(`drawBackground` メソッドごと削除)
+2. シーン3ファイル(`title.ts` / `play.ts` / `gameover.ts`)の `this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)` を `drawNeonBackground(ctx, FIELD_W, FIELD_H, 0)` に置換し、各ファイルに `import { drawNeonBackground } from '../render/background'` を追加(第4引数の時間配線は Task 7〜9 で行うのでここでは `0` 固定でよい)
+3. `bullet.ts` の draw を、assets を使わないシグネチャに変更(見た目の本実装は Task 6 で行う):
 
 ```ts
   draw(ctx: CanvasRenderingContext2D): void {
@@ -396,7 +397,9 @@ export async function loadAssets(): Promise<Assets> {
   }
 ```
 
-`bullet.draw` の呼び出し側(play.ts)も `b.draw(ctx)` に合わせる。
+  併せて `bullet.ts` 冒頭の `import type { Assets } from '../assets'` を削除する(未使用になるため tsc が落ちる)。
+
+4. `play.ts` の呼び出しを `b.draw(ctx, this.g.assets)` → `b.draw(ctx)` に変更
 
 - [ ] **Step 2: 旧アセット削除** — Run: `git rm public/assets/bullet.png public/assets/background.png`
 - [ ] **Step 3: ビルド確認** — Run: `npm run build` → PASS
@@ -476,7 +479,11 @@ player.ts(hand.ts も同型。色は `HAND_COLORS[this.hand].glow`、hand.ts は
   }
 ```
 
-(hand.ts では `enemy-${this.hand}`、`HAND_COLORS[this.hand].base + '44'` 相当のうっすら赤みでなく手色そのまま。import は `import { HAND_COLORS } from '../render/theme'`)
+`hand.ts` も同一の構造で、違いは2点だけ:
+- スプライト名を `enemy-${this.hand}` にする
+- グロー色を `HAND_COLORS[this.hand].base`(自機は `.glow`)にする
+
+両ファイルとも `import { HAND_COLORS } from '../render/theme'` を追加する。
 
 - [ ] **Step 3: particle.ts の draw を加算合成+サイズ減衰に**
 

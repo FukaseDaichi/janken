@@ -1,17 +1,19 @@
 import type { Scene, GameContext } from '../game'
 import { GameOverScene } from './gameover'
+import { drawNeonBackground } from '../render/background'
+import { drawSidePanel } from '../render/panel'
+import { outlinedText } from '../render/text'
+import { FONT_DISPLAY, COLORS } from '../render/theme'
 import { Player, FIELD_W, FIELD_H } from '../entities/player'
 import { Bullet, spawnBullet } from '../entities/bullet'
 import { JankenHand } from '../entities/hand'
 import { Particle, burstParticles } from '../entities/particle'
 import { collides } from '../entities/collision'
-import { judge, beats, randomHand, randomOtherHand, type Hand } from '../logic/janken'
+import { judge, randomHand, randomOtherHand } from '../logic/janken'
 import { initialLevelState, addWin, WINS_PER_LEVEL, type LevelState } from '../logic/level'
 import { timeScore, killBonus, levelMultiplier } from '../logic/score'
 import { difficultyFor } from '../logic/difficulty'
 import { saveHighScoreIfHigher } from '../storage'
-
-const HAND_LABEL: Record<Hand, string> = { rock: 'グー', scissors: 'チョキ', paper: 'パー' }
 
 export class PlayScene implements Scene {
   private player: Player
@@ -127,12 +129,11 @@ export class PlayScene implements Scene {
 
   draw(ctx: CanvasRenderingContext2D): void {
     ctx.save()
-    this.g.assets.drawBackground(ctx, FIELD_W, FIELD_H)
+    drawNeonBackground(ctx, FIELD_W, FIELD_H, this.elapsedSec)
 
     for (const h of this.hands) h.draw(ctx, this.g.assets)
-    for (const b of this.bullets) b.draw(ctx, this.g.assets)
+    for (const b of this.bullets) b.draw(ctx)
 
-    // 形態変化アニメ: 点滅
     if (this.morphSec <= 0 || Math.floor(this.morphSec * 12) % 2 === 0) {
       this.player.draw(ctx, this.g.assets)
     }
@@ -143,24 +144,26 @@ export class PlayScene implements Scene {
       ctx.fillRect(0, 0, FIELD_W, FIELD_H)
     }
 
-    this.drawHud(ctx)
+    // LEVEL UP! バナー(morph 中のみ)。上からスッと降りてフェード
+    if (this.morphSec > 0) {
+      const t = 1 - this.morphSec / 0.6
+      ctx.globalAlpha = Math.min(1, (1 - t) * 3)
+      outlinedText(ctx, 'LEVEL UP!', FIELD_W / 2, FIELD_H * 0.3 - (1 - t) * 20, {
+        size: 64, font: FONT_DISPLAY, fill: COLORS.yellow,
+        outline: '#000', shadowColor: 'rgba(0,0,0,0.6)',
+      })
+      ctx.globalAlpha = 1
+    }
+
+    // パネルは最後(フィールド右端のはみ出しを覆う)
+    drawSidePanel(ctx, this.g.assets, {
+      score: this.score,
+      level: this.levelState.level,
+      multiplier: levelMultiplier(this.levelState.level),
+      wins: this.levelState.wins,
+      winsPerLevel: WINS_PER_LEVEL,
+      playerHand: this.player.hand,
+    })
     ctx.restore()
-  }
-
-  private drawHud(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = '#fff'
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'alphabetic'
-    ctx.font = 'bold 24px sans-serif'
-    ctx.fillText(`SCORE ${Math.floor(this.score)}`, 16, 34)
-    ctx.font = '18px sans-serif'
-    ctx.fillText(`LV ${this.levelState.level} (×${levelMultiplier(this.levelState.level).toFixed(1)})`, 16, 62)
-    ctx.fillText(`勝利 ${this.levelState.wins}/${WINS_PER_LEVEL}`, 16, 86)
-
-    ctx.textAlign = 'right'
-    ctx.font = 'bold 20px sans-serif'
-    ctx.fillText(`自分: ${HAND_LABEL[this.player.hand]}`, FIELD_W - 16, 34)
-    ctx.fillStyle = '#2ecc71'
-    ctx.fillText(`倒せる手: ${HAND_LABEL[beats(this.player.hand)]}`, FIELD_W - 16, 62)
   }
 }
