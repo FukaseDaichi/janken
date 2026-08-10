@@ -38,6 +38,7 @@ function makeLatchInput(initialConfirm = false): Input & { setConfirm(v: boolean
       confirmEdge = false
       return v
     },
+    consumeDirX: (): number => 0,
     setConfirm: (v: boolean): void => {
       confirmEdge = v
     },
@@ -60,6 +61,7 @@ function makeContext(input?: Input): GameContext & { soundSpy: SoundSpy } {
       dx: 0,
       dy: 0,
       consumeConfirm: () => false,
+      consumeDirX: (): number => 0,
     } as unknown as Input)
 
   const assets = {

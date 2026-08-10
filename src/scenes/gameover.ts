@@ -1,5 +1,7 @@
 import type { Scene, GameContext } from '../game'
-import { loadHighScore } from '../storage'
+import { loadHighScore, loadSkin, saveSkin } from '../storage'
+import { SKINS, nextSkin, isUnlocked, unlockScoreOf, type SkinId } from '../logic/skins'
+import { playerSprite } from '../assets'
 import { PlayScene } from './play'
 import { drawNeonBackground } from '../render/background'
 import { outlinedText, neonText } from '../render/text'
@@ -7,13 +9,23 @@ import { CANVAS_W, CANVAS_H, COLORS, FONT_DISPLAY, FONT_NUM } from '../render/th
 
 export class GameOverScene implements Scene {
   private shakeSec = 0.4
+  private highScore: number
+  private selected: SkinId
 
   constructor(
     private g: GameContext,
     private score: number,
     private level: number,
     private isNewRecord: boolean,
-  ) {}
+  ) {
+    this.highScore = loadHighScore(g.storage)
+    this.selected = loadSkin(g.storage, this.highScore)
+  }
+
+  /** テスト用の読み取り口 */
+  selectedSkin(): SkinId {
+    return this.selected
+  }
 
   update(dtSec: number): Scene | null {
     this.shakeSec = Math.max(0, this.shakeSec - dtSec)
@@ -21,8 +33,16 @@ export class GameOverScene implements Scene {
     // 必ず呼んでラッチを毎フレーム排水する — ここで呼ばずに早期 return すると、
     // 死亡直前に押されていた（あるいはシェイク中に押された）confirmEdge が
     // 消費されずに残り、シェイク終了直後の1フレームで即リトライしてしまう。
+    // consumeDirX() も同じ理由で毎フレーム呼ぶ(呼ばないと死亡直前の ←→ が
+    // シェイク終了直後に化けて発火する)。
     const confirmed = this.g.input.consumeConfirm()
+    const dir = this.g.input.consumeDirX()
     if (this.shakeSec > 0) return null
+    if (dir === 1 || dir === -1) {
+      this.selected = nextSkin(this.selected, dir)
+      // 解放済みに合った時点で即保存。未解放は保存しない(リトライ時は直前の保存値が使われる)
+      if (isUnlocked(this.selected, this.highScore)) saveSkin(this.g.storage, this.selected)
+    }
     if (confirmed) {
       this.g.sound.startBgm()
       return new PlayScene(this.g)
@@ -83,6 +103,26 @@ export class GameOverScene implements Scene {
       ctx.fillStyle = COLORS.labelStrong
       ctx.font = `700 16px ${FONT_NUM}`
       ctx.fillText(`HIGH SCORE  ${loadHighScore(this.g.storage).toLocaleString('en-US')}`, cx, py + 170)
+    }
+
+    // スキンプレビュー: パネル左のスペースに選択中スキンを表示。←→ で全スキンを巡回し、
+    // 未解放はシルエット + 必要スコアを見せてモチベーションにする(保存は解放済みのみ)
+    const sx = px - 115  // パネル左端から 115px 左が中心
+    const sy = py + 92
+    const unlocked = isUnlocked(this.selected, this.highScore)
+    const skinDef = SKINS.find((s) => s.id === this.selected)!
+    ctx.save()
+    if (!unlocked) ctx.filter = 'brightness(0)'
+    this.g.assets.draw(ctx, playerSprite(this.selected, 'rock'), sx, sy, 130)
+    ctx.restore()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.font = `700 15px ${FONT_NUM}`
+    ctx.fillStyle = COLORS.labelStrong
+    ctx.fillText(`◀  ${skinDef.label}  ▶`, sx, sy + 92)
+    if (!unlocked) {
+      ctx.fillStyle = COLORS.label
+      ctx.fillText(`UNLOCK ${unlockScoreOf(this.selected).toLocaleString('en-US')}`, sx, sy + 116)
     }
 
     // リトライプロンプト(シェイク終了後のみ点滅表示)
