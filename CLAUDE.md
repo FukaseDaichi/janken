@@ -25,13 +25,13 @@ npm run build              # tsc --noEmit で型チェック後に vite build
 
 レイヤー分離:
 
-- `src/logic/` — 純粋ロジック（じゃんけん勝敗判定、難易度曲線、レベル、スコア、無敵状態）。DOM/Canvas 非依存で、テストは主にここと `src/entities/` を対象にしている。
+- `src/logic/` — 純粋ロジック（じゃんけん勝敗判定、難易度曲線、レベル、スコア、無敵状態、スキン解放判定）。DOM/Canvas 非依存で、テストは主にここと `src/entities/` を対象にしている。
 - `src/entities/` — プレイヤー・弾・じゃんけんの手・アイテム（星）・パーティクル・衝突判定。
 - `src/render/` — 描画ユーティリティとテーマ。**内部解像度（CANVAS_W/H）や色などの定数は `src/render/theme.ts` に一本化**されている。index.html 側の canvas 属性は初期値にすぎない。
 - `src/assets.ts` — 画像のロード。ファイル名は `IMAGE_FILES` に集約。読み込み失敗時は `Assets.get()` が undefined を返し、呼び出し側が代替描画にフォールバックする。
 - `src/audio.ts` — WebAudio によるビープ生成。BGM は `BGM_TRACKS`（`normal` / `invincible`）をモードで切り替える。
 - `src/input.ts` — キー入力。Enter/Space はエッジラッチ方式（`confirmEdge`）。
-- `src/storage.ts` — ハイスコアの永続化。
+- `src/storage.ts` — ハイスコアとスキン選択の永続化。
 
 ## タイトル画面のヒーロー画像
 
