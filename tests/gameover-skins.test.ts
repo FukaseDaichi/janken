@@ -72,9 +72,7 @@ describe('GameOverScene のスキン選択', () => {
   it('未解放スキン表示中にリトライしても保存値は変わらず、PlayScene には保存済みスキンが適用される', () => {
     const { scene, input, storage } = makeScene({ [HIGHSCORE_KEY]: '15000', [SKIN_KEY]: 'cyber' })
     input.press(1)
-    scene.update(1 / 60)
-    input.press(1)
-    scene.update(1 / 60)  // mage(未解放)にカーソル
+    scene.update(1 / 60)  // cyber → mage(未解放)にカーソル
     input.confirm()
     const next = scene.update(1 / 60)
     expect(next).toBeInstanceOf(PlayScene)
