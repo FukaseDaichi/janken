@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { loadHighScore, saveHighScoreIfHigher, HIGHSCORE_KEY, type ScoreStore } from '../src/storage'
+import { loadHighScore, saveHighScoreIfHigher, loadSkin, saveSkin, HIGHSCORE_KEY, SKIN_KEY, type ScoreStore } from '../src/storage'
 
 function memoryStore(initial: Record<string, string> = {}): ScoreStore & { data: Record<string, string> } {
   const data = { ...initial }
@@ -51,5 +51,28 @@ describe('saveHighScoreIfHigher', () => {
     const store = memoryStore({ [HIGHSCORE_KEY]: '10' })
     expect(saveHighScoreIfHigher(store, 12.9)).toBe(true)
     expect(store.data[HIGHSCORE_KEY]).toBe('12')
+  })
+})
+
+describe('loadSkin', () => {
+  it('未保存なら default', () => {
+    expect(loadSkin(memoryStore(), 100000)).toBe('default')
+  })
+  it('保存済みかつ解放済みならその値', () => {
+    expect(loadSkin(memoryStore({ [SKIN_KEY]: 'cyber' }), 15000)).toBe('cyber')
+  })
+  it('保存済みでも未解放(ハイスコア不足)なら default にフォールバック', () => {
+    expect(loadSkin(memoryStore({ [SKIN_KEY]: 'maid' }), 74999)).toBe('default')
+  })
+  it('不正な ID は default にフォールバック', () => {
+    expect(loadSkin(memoryStore({ [SKIN_KEY]: 'ninja' }), 100000)).toBe('default')
+  })
+})
+
+describe('saveSkin', () => {
+  it('スキン ID を保存する', () => {
+    const store = memoryStore()
+    saveSkin(store, 'forest')
+    expect(store.data[SKIN_KEY]).toBe('forest')
   })
 })
