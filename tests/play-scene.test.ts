@@ -4,6 +4,7 @@ import type { Input } from '../src/input'
 import type { Assets } from '../src/assets'
 import type { Sound } from '../src/audio'
 import type { ScoreStore } from '../src/storage'
+import { HIGHSCORE_KEY, SKIN_KEY } from '../src/storage'
 import { PlayScene } from '../src/scenes/play'
 import { GameOverScene } from '../src/scenes/gameover'
 import { JankenHand } from '../src/entities/hand'
@@ -53,8 +54,10 @@ interface SoundSpy {
 
 /** Input/Assets/Sound は private フィールドを持つ具象クラスなので、
  *  構造的に一致するスタブを any-cast で GameContext に差し込む。
- *  Sound の呼び出し履歴はテストから読めるよう soundSpy に載せて返す。 */
-function makeContext(input?: Input): GameContext & { soundSpy: SoundSpy } {
+ *  Sound の呼び出し履歴はテストから読めるよう soundSpy に載せて返す。
+ *  storeData を渡すと、その内容で初期化した memoryStore を storage に使う
+ *  (ハイスコア・保存スキンを前提にした構築を検証するテスト用)。 */
+function makeContext(input?: Input, storeData: Record<string, string> = {}): GameContext & { soundSpy: SoundSpy } {
   const resolvedInput =
     input ??
     ({
@@ -80,9 +83,32 @@ function makeContext(input?: Input): GameContext & { soundSpy: SoundSpy } {
     powerUp: () => { soundSpy.powerUpCalls++ },
   } as unknown as Sound
 
-  const storage = memoryStore()
+  const storage = memoryStore(storeData)
 
   return { input: resolvedInput, assets, sound, storage, soundSpy }
+}
+
+/** PlayScene.draw() をエラーなく走らせるための最小限の CanvasRenderingContext2D スタブ。
+ *  プロパティ代入はすべて受け入れ、メソッド呼び出しはグラデーション/measureText 以外
+ *  すべて no-op を返す(戻り値を使わない描画コードしか通らないため)。 */
+function makeFakeCtx(): CanvasRenderingContext2D {
+  const props: Record<string, unknown> = {}
+  const gradient = { addColorStop: () => {} }
+  return new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (prop === 'createLinearGradient' || prop === 'createRadialGradient') return () => gradient
+        if (prop === 'measureText') return () => ({ width: 0 })
+        if (prop in props) return props[prop as string]
+        return () => {}
+      },
+      set(_target, prop, value) {
+        props[prop as string] = value
+        return true
+      },
+    },
+  ) as unknown as CanvasRenderingContext2D
 }
 
 /** 弾と手のスポーンを止める。テストが置いたエンティティ以外が湧かないようにして、
@@ -357,6 +383,67 @@ describe('PlayScene.update', () => {
 
     expect((scene as any).items.length).toBe(1)
     expect((scene as any).itemTimer).toBe(ITEM_SPAWN_INTERVAL_SEC)
+  })
+
+  it('保存済みスキンが解放済みハイスコアで解放されている場合、その skin で Player が構築される（きせかえ Finding 1）', () => {
+    // play.ts の constructor が loadSkin(g.storage, loadHighScore(g.storage)) を
+    // Player に渡す一行を検証する。渡し忘れると Player は既定の 'default' になる。
+    const g = makeContext(undefined, { [HIGHSCORE_KEY]: '15000', [SKIN_KEY]: 'cyber' })
+
+    const scene = new PlayScene(g)
+    const player = (scene as any).player
+
+    expect(player.skin).toBe('cyber')
+  })
+
+  it('draw() は自機の現在スキン(this.player.skin)を PanelData.skin としてそのまま HUD 描画に渡す（きせかえ Finding 2）', () => {
+    // this.player.skin が変わっても PanelData.skin に配線されていなければ HUD アイコンは
+    // 常に 'default' の見た目に戻ってしまう。ここでは HUD アイコン描画(drawSidePanel が
+    // 呼ぶ assets.draw)に渡ったスプライト名を捕まえて検証する。
+    // 自機本体(Player.draw)も同じ assets.draw を呼ぶため、それと混同しないよう
+    // morphSec を「奇数コマ」に固定して自機本体の描画だけをスキップさせる
+    // (PlayScene.draw() の `Math.floor(this.morphSec * 12) % 2 === 0` 分岐を参照)。
+    const g = makeContext()
+    const drawnSprites: string[] = []
+    ;(g.assets as any).draw = (_ctx: unknown, name: string) => { drawnSprites.push(name) }
+
+    const scene = new PlayScene(g)
+    const player = (scene as any).player
+    player.hand = 'rock'
+    player.skin = 'cyber'
+    ;(scene as any).morphSec = 0.1
+
+    scene.draw(makeFakeCtx())
+
+    const playerSprites = drawnSprites.filter((n) => n.startsWith('player-'))
+    expect(playerSprites).toEqual(['player-cyber-rock'])
+  })
+})
+
+describe('PlayScene.gameOver', () => {
+  it('ハイスコア保存を GameOverScene 構築より先に行うため、今回到達したスコアで新たに解放されたスキンが同じゲームオーバー画面で即座に選択できる（きせかえ Finding 3）', () => {
+    // play.ts の gameOver() は saveHighScoreIfHigher() → new GameOverScene() の順で
+    // 実行される。GameOverScene のコンストラクタは loadHighScore() を読み直すので、
+    // この順序が守られていないと(コンストラクタを先に呼ぶと)、GameOverScene が
+    // 保持する highScore は「保存前の古い値」になってしまい、今回のプレイで
+    // ちょうど超えたスキンの閾値が未解放のまま扱われる。
+    const g = makeContext(undefined, { [HIGHSCORE_KEY]: '0' })
+    const scene = new PlayScene(g)
+    // cyber の解放スコア(15000)にちょうど到達したことにする
+    ;(scene as any).score = 15000
+    const player = (scene as any).player
+    const bullet = spawnBullet('straight', player.x, player.y, 0, 0)
+    ;(scene as any).bullets = [bullet]
+    ;(scene as any).hands = []
+
+    const next = scene.update(0)
+
+    expect(next).toBeInstanceOf(GameOverScene)
+    // ハイスコアの保存自体は既に起きている(順序が正しいことの前提)
+    expect((g.storage as any).data[HIGHSCORE_KEY]).toBe('15000')
+    // GameOverScene が読み直した highScore は「保存後」の値でなければならない
+    const goScene = next as GameOverScene
+    expect((goScene as any).highScore).toBe(15000)
   })
 })
 

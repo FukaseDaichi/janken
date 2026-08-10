@@ -102,7 +102,7 @@ export class GameOverScene implements Scene {
     } else {
       ctx.fillStyle = COLORS.labelStrong
       ctx.font = `700 16px ${FONT_NUM}`
-      ctx.fillText(`HIGH SCORE  ${loadHighScore(this.g.storage).toLocaleString('en-US')}`, cx, py + 170)
+      ctx.fillText(`HIGH SCORE  ${this.highScore.toLocaleString('en-US')}`, cx, py + 170)
     }
 
     // スキンプレビュー: パネル左のスペースに選択中スキンを表示。←→ で全スキンを巡回し、
