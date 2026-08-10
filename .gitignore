@@ -3,3 +3,6 @@ dist/
 
 .claude/launch.json
 .superpowers/
+
+
+.DS_Store
