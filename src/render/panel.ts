@@ -1,5 +1,6 @@
 import type { Hand } from '../logic/janken'
-import type { Assets } from '../assets'
+import { playerSprite, type Assets } from '../assets'
+import type { SkinId } from '../logic/skins'
 import { beats } from '../logic/janken'
 import { CANVAS_H, PANEL_X, PANEL_W, COLORS, HAND_COLORS, HAND_LABEL, FONT_DISPLAY, FONT_NUM } from './theme'
 import { neonText } from './text'
@@ -11,6 +12,7 @@ export interface PanelData {
   wins: number
   winsPerLevel: number
   playerHand: Hand
+  skin: SkinId
 }
 
 export function drawSidePanel(ctx: CanvasRenderingContext2D, assets: Assets, d: PanelData): void {
@@ -74,7 +76,7 @@ export function drawSidePanel(ctx: CanvasRenderingContext2D, assets: Assets, d: 
 
   // 自分の手
   label('YOU', 430)
-  assets.draw(ctx, `player-${d.playerHand}`, cx, 486, 76)
+  assets.draw(ctx, playerSprite(d.skin, d.playerHand), cx, 486, 76)
   ctx.font = `16px ${FONT_DISPLAY}`
   ctx.fillStyle = HAND_COLORS[d.playerHand].glow
   ctx.fillText(HAND_LABEL[d.playerHand], cx, 540)

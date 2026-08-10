@@ -1,6 +1,7 @@
 import type { Hand } from '../logic/janken'
 import type { Input } from '../input'
-import type { Assets } from '../assets'
+import { playerSprite, type Assets } from '../assets'
+import type { SkinId } from '../logic/skins'
 import { HAND_COLORS } from '../render/theme'
 
 export const FIELD_W = 960
@@ -12,7 +13,7 @@ export class Player {
   y = FIELD_H / 2
   readonly radius = 24
 
-  constructor(public hand: Hand) {}
+  constructor(public hand: Hand, public skin: SkinId = 'default') {}
 
   update(input: Input, dtSec: number): void {
     let dx = input.dx
@@ -39,6 +40,6 @@ export class Player {
     ctx.arc(this.x, this.y, r, 0, Math.PI * 2)
     ctx.fill()
     ctx.restore()
-    assets.draw(ctx, `player-${this.hand}`, this.x, this.y, this.radius * 2.4)
+    assets.draw(ctx, playerSprite(this.skin, this.hand), this.x, this.y, this.radius * 2.4)
   }
 }

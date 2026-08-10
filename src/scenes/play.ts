@@ -19,7 +19,7 @@ import { judge, randomHand, randomOtherHand } from '../logic/janken'
 import { initialLevelState, addWin, WINS_PER_LEVEL, type LevelState } from '../logic/level'
 import { timeScore, killBonus, levelMultiplier } from '../logic/score'
 import { difficultyFor } from '../logic/difficulty'
-import { saveHighScoreIfHigher } from '../storage'
+import { saveHighScoreIfHigher, loadHighScore, loadSkin } from '../storage'
 
 export class PlayScene implements Scene {
   private player: Player
@@ -42,7 +42,8 @@ export class PlayScene implements Scene {
   private inv: InvincibleState = initialInvincibleState()
 
   constructor(private g: GameContext) {
-    this.player = new Player(randomHand(Math.random))
+    const skin = loadSkin(g.storage, loadHighScore(g.storage))
+    this.player = new Player(randomHand(Math.random), skin)
   }
 
   update(dtSec: number): Scene | null {
@@ -230,6 +231,7 @@ export class PlayScene implements Scene {
       wins: this.levelState.wins,
       winsPerLevel: WINS_PER_LEVEL,
       playerHand: this.player.hand,
+      skin: this.player.skin,
     })
     ctx.restore()
   }
