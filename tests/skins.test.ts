@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { SKINS, isSkinId, isUnlocked, unlockScoreOf, nextSkin } from '../src/logic/skins'
+import { playerSprite } from '../src/assets'
+
+describe('playerSprite', () => {
+  it('default は従来のスプライト名', () => {
+    expect(playerSprite('default', 'rock')).toBe('player-rock')
+  })
+  it('スキン付きは player-{skin}-{hand}', () => {
+    expect(playerSprite('cyber', 'scissors')).toBe('player-cyber-scissors')
+    expect(playerSprite('maid', 'paper')).toBe('player-maid-paper')
+  })
+})
 
 describe('SKINS テーブル', () => {
   it('巡回順どおり6スキンが定義されている', () => {
